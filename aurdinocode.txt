@@ -1,0 +1,134 @@
+
+#include <LiquidCrystal.h>
+#include <stdio.h>
+
+LiquidCrystal lcd(6, 7, 5, 4, 3, 2);
+ unsigned char rcv,count,gchr,gchr1,robos='s';
+ //char pastnumber[11]="";
+ 
+
+
+String inputString = "";         // a string to hold incoming data
+boolean stringComplete = false;  // whether the string is complete
+
+
+int m1a    = A0;
+int m1b    = A1;
+
+int m2a    = A2;
+int m2b    = A3;
+
+
+int buzzer = 12;
+
+int irl    = 8;
+int irr    = 9;
+
+
+
+
+void okcheck()
+{
+  unsigned char rcr;
+  do{
+      rcr = Serial.read();
+    }
+
+while(rcr != 'K');
+
+
+}
+void setup() 
+{
+  Serial.begin(9600);serialEvent();
+
+
+  pinMode(irl, INPUT);pinMode(irr, INPUT);
+  pinMode(m1a, OUTPUT);pinMode(m1b, OUTPUT);
+  pinMode(m2a, OUTPUT);pinMode(m2b, OUTPUT);
+  pinMode(buzzer, OUTPUT);
+  
+  digitalWrite(m1a, LOW);digitalWrite(m1b, LOW);
+  digitalWrite(m2a, LOW);digitalWrite(m2b, LOW);
+  digitalWrite(buzzer, HIGH);
+  
+  
+  lcd.begin(16, 2);
+  lcd.print("Railway Track");
+  lcd.setCursor(0,1);
+  lcd.print("    Fault   ");
+    delay(1500);
+  
+  Serial.write("AT\r\n");         delay(3000);//okcheck();
+  Serial.write("AT+CIPMUX=1\r\n");delay(3000);//         okcheck();
+  Serial.write("AT+CIPSERVER=1,23\r\n"); //        okcheck();
+  
+  lcd.clear();
+  lcd.print("Waiting For");
+  lcd.setCursor(0,1);
+  lcd.print("Connection");  
+  do{
+     rcv = Serial.read();
+    }while(rcv != 'C');
+
+ 
+  lcd.clear();
+  lcd.print("Connected");
+  delay(1000);
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Left:");   //6,0
+  lcd.setCursor(0,1);
+  lcd.print("Right:");  //6,1  
+  //serialEvent();
+}
+
+void loop() 
+{     
+  if(digitalRead(irr) == HIGH && digitalRead(irl) == HIGH)
+    {
+      lcd.setCursor(6,0);lcd.print("Normal");
+      lcd.setCursor(6,1);lcd.print("Normal");
+      digitalWrite(m1a, HIGH);digitalWrite(m1b, LOW);
+      digitalWrite(m2a, HIGH);digitalWrite(m2b, LOW);
+      digitalWrite(buzzer, LOW);
+    }
+
+
+  if(digitalRead(irl) == LOW)
+    {
+      lcd.setCursor(6,0);lcd.print("Crack  ");  
+      digitalWrite(m1a, LOW);digitalWrite(m1b, LOW);
+      digitalWrite(m2a, LOW);digitalWrite(m2b, LOW);
+      digitalWrite(buzzer, HIGH);
+
+      
+                  Serial.write("AT+CIPSEND=0,11\r\n");delay(2000);
+                  Serial.write("Left-Crack\r\n");delay(3000);
+    }  
+  if(digitalRead(irl) == HIGH)
+    {
+      lcd.setCursor(6,0);lcd.print("Normal ");  
+    }
+    
+  if(digitalRead(irr) == LOW)
+    {
+      lcd.setCursor(6,1);lcd.print("Crack  ");  
+      digitalWrite(m1a, LOW);digitalWrite(m1b, LOW);
+      digitalWrite(m2a, LOW);digitalWrite(m2b, LOW);
+      digitalWrite(buzzer, HIGH);
+
+      
+                  Serial.write("AT+CIPSEND=0,12\r\n");delay(2000);
+                  Serial.write("Right-Crack\r\n");delay(3000);
+    }
+  if(digitalRead(irr) == HIGH)
+    {
+      lcd.setCursor(6,1);lcd.print("Normal ");  
+    }
+      
+        
+            delay(100);
+}
+
